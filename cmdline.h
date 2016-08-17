@@ -36,8 +36,12 @@
 #include <typeinfo>
 #include <cstring>
 #include <algorithm>
-#include <cxxabi.h>
 #include <cstdlib>
+
+#ifndef _MSC_VER
+#include <cxxabi.h>
+#endif
+
 
 namespace cmdline{
 
@@ -102,20 +106,33 @@ Target lexical_cast(const Source &arg)
   return lexical_cast_t<Target, Source, detail::is_same<Target, Source>::value>::cast(arg);
 }
 
+#ifdef _MSC_VER
+
+template <class T>
+std::string readable_typename()
+{
+	return typeid(T).name();
+}
+
+#else
+
 static inline std::string demangle(const std::string &name)
 {
-  int status=0;
-  char *p=abi::__cxa_demangle(name.c_str(), 0, 0, &status);
-  std::string ret(p);
-  free(p);
-  return ret;
+	int status = 0;
+	char *p = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+	std::string ret(p);
+	free(p);
+	return ret;
 }
 
 template <class T>
 std::string readable_typename()
 {
-  return demangle(typeid(T).name());
+	return demangle(typeid(T).name());
 }
+
+#endif
+
 
 template <class T>
 std::string default_value(T def)
